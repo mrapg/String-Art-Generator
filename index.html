@@ -14,7 +14,7 @@
         .control-panel {
             background-color: #1a1a1a;
         }
-        .canvas-container {
+        .canvas-container, .build-instructions-container {
             background-color: #2a2a2a;
         }
         label {
@@ -49,70 +49,103 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col lg:flex-row min-h-screen">
+<body class="bg-gray-900 text-white flex flex-col min-h-screen">
 
-    <!-- CONTROLS PANEL -->
-    <div class="control-panel w-full lg:w-80 p-6 shadow-2xl flex-shrink-0 overflow-y-auto">
-        <h1 class="text-2xl font-bold text-gray-200 mb-2">String Art Generator</h1>
-        <p class="text-sm text-gray-400 mb-6">Based on the "Intelligent Greedy" algorithm.</p>
+    <div class="flex flex-col lg:flex-row flex-grow">
+        <!-- CONTROLS PANEL -->
+        <div class="control-panel w-full lg:w-80 p-6 shadow-2xl flex-shrink-0 overflow-y-auto">
+            <h1 class="text-2xl font-bold text-gray-200 mb-2">String Art Generator</h1>
+            <p class="text-sm text-gray-400 mb-6">Based on the "Intelligent Greedy" algorithm.</p>
 
-        <div class="space-y-6">
-            <div>
-                <label for="image-upload" class="block text-sm font-medium mb-2">1. Upload Image</label>
-                <input type="file" id="image-upload" accept="image/*" class="w-full text-sm rounded-lg cursor-pointer p-2.5">
+            <div class="space-y-6">
+                <div>
+                    <label for="image-upload" class="block text-sm font-medium mb-2">1. Upload Image</label>
+                    <input type="file" id="image-upload" accept="image/*" class="w-full text-sm rounded-lg cursor-pointer p-2.5">
+                </div>
+
+                <div>
+                    <label for="pins" class="block text-sm font-medium mb-2">2. Number of Pins</label>
+                    <input type="number" id="pins" value="256" class="w-full rounded-lg p-2.5">
+                </div>
+
+                <div>
+                    <label for="strings" class="block text-sm font-medium mb-2">3. Number of Strings</label>
+                    <input type="number" id="strings" value="3000" class="w-full rounded-lg p-2.5">
+                </div>
+                 <div>
+                    <label for="canvas-size" class="block text-sm font-medium mb-2">4. Canvas Size (inches)</label>
+                    <input type="number" id="canvas-size" value="24" class="w-full rounded-lg p-2.5">
+                </div>
+                 <div>
+                    <label for="thread-width" class="block text-sm font-medium mb-2">5. Thread Width (mm)</label>
+                    <input type="number" id="thread-width" value="0.5" step="0.1" class="w-full rounded-lg p-2.5">
+                </div>
+
+                <button id="start-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:bg-blue-800">
+                    Generate Artwork
+                </button>
+
+                <div id="status" class="text-center text-gray-400 text-sm h-10 flex items-center justify-center">
+                    <p id="status-text">Please upload an image.</p>
+                    <div id="loader" class="loader hidden"></div>
+                </div>
             </div>
 
-            <div>
-                <label for="pins" class="block text-sm font-medium mb-2">2. Number of Pins</label>
-                <input type="number" id="pins" value="256" class="w-full rounded-lg p-2.5">
-            </div>
-
-            <div>
-                <label for="strings" class="block text-sm font-medium mb-2">3. Number of Strings</label>
-                <input type="number" id="strings" value="3000" class="w-full rounded-lg p-2.5">
-            </div>
-             <div>
-                <label for="canvas-size" class="block text-sm font-medium mb-2">4. Canvas Size (inches)</label>
-                <input type="number" id="canvas-size" value="24" class="w-full rounded-lg p-2.5">
-            </div>
-             <div>
-                <label for="thread-width" class="block text-sm font-medium mb-2">5. Thread Width (mm)</label>
-                <input type="number" id="thread-width" value="0.5" step="0.1" class="w-full rounded-lg p-2.5">
-            </div>
-
-            <button id="start-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:bg-blue-800">
-                Generate Artwork
-            </button>
-
-            <div id="status" class="text-center text-gray-400 text-sm h-10 flex items-center justify-center">
-                <p id="status-text">Please upload an image.</p>
-                <div id="loader" class="loader hidden"></div>
-            </div>
         </div>
 
-        <!-- INSTRUCTIONS SECTION -->
-        <div id="instructions-container" class="mt-8 hidden">
-            <h2 class="text-lg font-bold text-gray-200 mb-2">Threading Instructions</h2>
-            <p class="text-xs text-gray-400 mb-4">Follow this pin sequence. Pins are numbered 0 to N-1, starting at the 3 o'clock position and going clockwise.</p>
-            <textarea id="pin-sequence" readonly class="w-full h-32 bg-gray-800 text-gray-300 rounded-lg p-2 text-sm border border-gray-600 resize-none"></textarea>
-            <button id="download-btn" class="w-full mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">
-               Download Instructions (.txt)
-            </button>
-       </div>
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-grow flex flex-col overflow-auto">
+            <!-- CANVAS AREA -->
+            <div class="canvas-container p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center">
+                <div class="text-center">
+                    <h2 class="text-lg font-semibold mb-3 text-gray-300">Original (Grayscale)</h2>
+                    <canvas id="original-canvas" width="500" height="500" class="mx-auto rounded-lg shadow-lg"></canvas>
+                </div>
+                <div class="text-center">
+                    <h2 class="text-lg font-semibold mb-3 text-gray-300">Generated String Art</h2>
+                    <canvas id="string-art-canvas" width="500" height="500" class="mx-auto rounded-lg shadow-lg bg-white"></canvas>
+                </div>
+            </div>
+            
+            <!-- BUILD INSTRUCTIONS SECTION (Combined) -->
+            <div id="build-instructions-container" class="build-instructions-container p-6 hidden">
+                 <h2 class="text-2xl font-bold text-center text-gray-200 mb-4">Build Instructions</h2>
+                 
+                 <!-- VISUALIZER -->
+                 <div class="max-w-3xl mx-auto bg-gray-800 rounded-lg p-4 shadow-lg">
+                    <div class="grid grid-cols-2 gap-4 text-gray-300 mb-4 border-b border-gray-700 pb-2">
+                        <div>Total Strings: <span id="total-strings" class="font-bold text-white">0</span></div>
+                        <div class="text-right">Est. Thread Length: <span id="thread-length" class="font-bold text-white">0 ft / 0 m</span></div>
+                    </div>
+                    <canvas id="visualizer-canvas" width="600" height="600" class="mx-auto rounded-lg bg-gray-700"></canvas>
+                    <div class="text-center mt-4">
+                        <p class="text-lg font-semibold text-gray-200">Connect Pin <span id="from-pin" class="text-xl text-yellow-400">1</span> to Pin <span id="to-pin" class="text-xl text-yellow-400">1</span></p>
+                        <div class="flex items-center justify-center mt-2 space-x-4">
+                            <button id="prev-step-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg">&lt; Prev</button>
+                            <p id="step-counter" class="text-gray-400">Step 1 of 3000</p>
+                            <button id="next-step-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg">Next &gt;</button>
+                        </div>
+                    </div>
+                 </div>
+
+                 <!-- PIN SEQUENCE & DOWNLOADS -->
+                 <div id="instructions-container" class="max-w-3xl mx-auto mt-8">
+                    <h2 class="text-lg font-bold text-gray-200 mb-2">Pin Sequence</h2>
+                    <p class="text-xs text-gray-400 mb-4">Follow this pin sequence. Pins are numbered 1 to N, starting at the 12 o'clock position and going clockwise.</p>
+                    <textarea id="pin-sequence" readonly class="w-full h-32 bg-gray-800 text-gray-300 rounded-lg p-2 text-sm border border-gray-600 resize-none"></textarea>
+                    <div class="flex space-x-2 mt-2">
+                         <button id="download-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">
+                           Download (.txt)
+                        </button>
+                        <button id="print-template-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">
+                            Print Template
+                        </button>
+                    </div>
+               </div>
+            </div>
+        </div>
     </div>
-
-    <!-- CANVAS AREA -->
-    <div class="canvas-container flex-grow p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center overflow-auto">
-        <div class="text-center">
-            <h2 class="text-lg font-semibold mb-3 text-gray-300">Original (Grayscale)</h2>
-            <canvas id="original-canvas" width="500" height="500" class="mx-auto rounded-lg shadow-lg"></canvas>
-        </div>
-        <div class="text-center">
-            <h2 class="text-lg font-semibold mb-3 text-gray-300">Generated String Art</h2>
-            <canvas id="string-art-canvas" width="500" height="500" class="mx-auto rounded-lg shadow-lg bg-white"></canvas>
-        </div>
-    </div>
-
+    
     <script>
         // --- DOM ELEMENT REFERENCES ---
         const imageUpload = document.getElementById('image-upload');
@@ -123,20 +156,35 @@
         const startBtn = document.getElementById('start-btn');
         const statusText = document.getElementById('status-text');
         const loader = document.getElementById('loader');
+        
         const instructionsContainer = document.getElementById('instructions-container');
         const pinSequenceTextarea = document.getElementById('pin-sequence');
         const downloadBtn = document.getElementById('download-btn');
+        const printTemplateBtn = document.getElementById('print-template-btn');
 
         const originalCanvas = document.getElementById('original-canvas');
         const originalCtx = originalCanvas.getContext('2d');
         const stringArtCanvas = document.getElementById('string-art-canvas');
         const stringArtCtx = stringArtCanvas.getContext('2d', { willReadFrequently: true });
+        
+        const buildInstructionsContainer = document.getElementById('build-instructions-container');
+        const visualizerCanvas = document.getElementById('visualizer-canvas');
+        const visualizerCtx = visualizerCanvas.getContext('2d');
+        const totalStringsEl = document.getElementById('total-strings');
+        const threadLengthEl = document.getElementById('thread-length');
+        const fromPinEl = document.getElementById('from-pin');
+        const toPinEl = document.getElementById('to-pin');
+        const prevStepBtn = document.getElementById('prev-step-btn');
+        const nextStepBtn = document.getElementById('next-step-btn');
+        const stepCounterEl = document.getElementById('step-counter');
 
 
         // --- GLOBAL STATE ---
         let targetImageData = null;
         let importanceMapData = null;
         let pins = [];
+        let pinPath = [];
+        let currentStep = 0;
         let precomputedLines = null;
         const CANVAS_SIZE = 500;
 
@@ -147,6 +195,9 @@
         imageUpload.addEventListener('change', handleImageUpload);
         startBtn.addEventListener('click', startGeneration);
         downloadBtn.addEventListener('click', downloadInstructions);
+        printTemplateBtn.addEventListener('click', printPinTemplate);
+        prevStepBtn.addEventListener('click', () => updateVisualizerStep(currentStep - 1));
+        nextStepBtn.addEventListener('click', () => updateVisualizerStep(currentStep + 1));
 
         // --- CORE FUNCTIONS ---
 
@@ -172,10 +223,8 @@
 
         /**
          * Processes the uploaded image: resizes, grayscales, and creates the importance map.
-         * @param {Image} img - The uploaded image object.
          */
         function processImage(img) {
-            // Resize and draw the image
             const aspectRatio = img.width / img.height;
             let drawWidth = CANVAS_SIZE;
             let drawHeight = CANVAS_SIZE;
@@ -191,7 +240,6 @@
             originalCtx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             originalCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
-            // Get image data, grayscale it
             const imageData = originalCtx.getImageData(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             const data = imageData.data;
             const grayscaleData = new Uint8ClampedArray(data.length);
@@ -204,11 +252,7 @@
                 grayscaleData[i + 3] = 255;
             }
             
-            // The target for the algorithm is the standard grayscale image.
-            // It will try to make the white canvas match this target by adding black threads.
             targetImageData = new Uint8ClampedArray(grayscaleData);
-
-            // Create the Sobel-based importance map from the standard grayscale image
             const grayscaleImageData = new ImageData(grayscaleData, CANVAS_SIZE, CANVAS_SIZE);
             const sobelData = applySobelFilter(grayscaleImageData); 
             importanceMapData = new Float32Array(CANVAS_SIZE * CANVAS_SIZE);
@@ -216,14 +260,11 @@
                 importanceMapData[i/4] = sobelData[i];
             }
             
-            // Display the NORMAL grayscale image for user reference
             originalCtx.putImageData(grayscaleImageData, 0, 0);
         }
         
         /**
          * Applies a Sobel filter to detect edges and create the importance map.
-         * @param {ImageData} imageData - The grayscale image data.
-         * @returns {Uint8ClampedArray} The data for the edge map.
          */
         function applySobelFilter(imageData) {
             const width = imageData.width;
@@ -266,11 +307,11 @@
         function generatePins() {
             pins = [];
             const numPins = parseInt(pinsInput.value);
-            const radius = CANVAS_SIZE / 2 - 5; // 5px padding
+            const radius = CANVAS_SIZE / 2 - 10; // 10px padding for safety
             const center = CANVAS_SIZE / 2;
 
             for (let i = 0; i < numPins; i++) {
-                const angle = (i / numPins) * 2 * Math.PI;
+                const angle = (i / numPins) * 2 * Math.PI - (Math.PI / 2); // Start from 12 o'clock
                 const x = Math.round(center + radius * Math.cos(angle));
                 const y = Math.round(center + radius * Math.sin(angle));
                 pins.push({ x, y });
@@ -279,7 +320,6 @@
 
         /**
          * Uses Bresenham's algorithm to find all pixels on a line between two points.
-         * @returns {Array<number>} An array of pixel indices.
          */
         function getLinePixels(x0, y0, x1, y1) {
             const pixels = [];
@@ -310,43 +350,67 @@
                 for (let j = i + 1; j < numPins; j++) {
                     const line = getLinePixels(pins[i].x, pins[i].y, pins[j].x, pins[j].y);
                     precomputedLines[i][j] = line;
-                    // precomputedLines[j][i] = line; // Lines are symmetrical
                 }
             }
         }
 
         /**
          * Calculates the "goodness" of a potential line based on the weighted error it reduces.
-         * @param {Array<number>} linePixels - Indices of pixels on the line.
-         * @param {Uint8ClampedArray} currentCanvasData - The current state of the generated art.
-         * @returns {number} The score (error reduction) for this line.
          */
         function calculatePerceptualImprovement(linePixels, currentCanvasData) {
             let errorBefore = 0;
             let errorAfter = 0;
-            // Simulate the impact of one string. We use a small value to guide the algorithm.
             const stringDarkness = 255 * 0.1; 
 
             for (const pixelIndex of linePixels) {
                 const i = pixelIndex * 4;
-                const weight = 1 + importanceMapData[pixelIndex] / 64; // Add weight from edge map
+                const weight = 1 + importanceMapData[pixelIndex] / 64; 
 
                 const currentVal = currentCanvasData[i];
                 const targetVal = targetImageData[i];
-                
                 const error = currentVal - targetVal;
-
                 errorBefore += (error * error) * weight;
                 
-                // Subtract darkness from the current canvas value
                 const newVal = Math.max(0, currentVal - stringDarkness);
                 const newError = newVal - targetVal;
-
                 errorAfter += (newError * newError) * weight;
             }
-
             return errorBefore - errorAfter;
         }
+        
+        /**
+         * Post-generation calculations and UI updates.
+         */
+        function completeGeneration() {
+            // Update UI
+            statusText.textContent = 'Generation complete!';
+            statusText.classList.remove('hidden');
+            loader.classList.add('hidden');
+            startBtn.disabled = false;
+            pinSequenceTextarea.value = pinPath.map(p => p + 1).join(' → ');
+            
+            // Calculate thread length
+            const canvasSizeInches = parseFloat(canvasSizeInput.value);
+            const scaleFactor = canvasSizeInches / CANVAS_SIZE;
+            let totalLengthInches = 0;
+            for (let i = 0; i < pinPath.length - 1; i++) {
+                const p1 = pins[pinPath[i]];
+                const p2 = pins[pinPath[i+1]];
+                const distPixels = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+                totalLengthInches += distPixels * scaleFactor;
+            }
+            const totalLengthFeet = totalLengthInches / 12;
+            const totalLengthMeters = totalLengthInches * 0.0254;
+            
+            // Update visualizer stats
+            totalStringsEl.textContent = stringsInput.value;
+            threadLengthEl.textContent = `${totalLengthFeet.toFixed(1)} ft / ${totalLengthMeters.toFixed(1)} m`;
+            
+            // Show and initialize visualizer and instructions
+            buildInstructionsContainer.classList.remove('hidden');
+            updateVisualizerStep(0);
+        }
+
 
         /**
          * The main entry point to start the string art generation process.
@@ -361,14 +425,14 @@
             startBtn.disabled = true;
             statusText.classList.add('hidden');
             loader.classList.remove('hidden');
-            instructionsContainer.classList.add('hidden');
+            buildInstructionsContainer.classList.add('hidden');
+            pinPath = []; // Reset path
 
             // --- GENERATION SETUP ---
             stringArtCtx.fillStyle = 'white';
             stringArtCtx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             generatePins();
             
-            // Show a brief message for pre-computation
             statusText.textContent = 'Pre-computing lines...';
             statusText.classList.remove('hidden');
             loader.classList.add('hidden');
@@ -383,33 +447,25 @@
 
             // --- MAIN LOOP ---
             let currentPin = 0;
-            const pinPath = [currentPin]; // To store the sequence of pins
+            pinPath.push(currentPin);
             const numStrings = parseInt(stringsInput.value);
             const currentCanvasData = new Uint8ClampedArray(targetImageData.length);
-            currentCanvasData.fill(255); // Start with a white canvas in memory
+            currentCanvasData.fill(255);
 
-            // Calculate line width in pixels for drawing
             const canvasSizeInches = parseFloat(canvasSizeInput.value);
             const threadWidthMM = parseFloat(threadWidthInput.value);
             const pixelsPerInch = CANVAS_SIZE / canvasSizeInches;
             const threadWidthInches = threadWidthMM / 25.4;
-            const threadWidthPixels = Math.max(0.1, threadWidthInches * pixelsPerInch); // Allow for sub-pixel rendering
+            const threadWidthPixels = Math.max(0.1, threadWidthInches * pixelsPerInch);
 
             let stringCount = 0;
 
             function generationStep() {
                 if (stringCount >= numStrings) {
-                    statusText.textContent = 'Generation complete!';
-                    statusText.classList.remove('hidden');
-                    loader.classList.add('hidden');
-                    startBtn.disabled = false;
-                    // Show instructions
-                    pinSequenceTextarea.value = pinPath.join(' → ');
-                    instructionsContainer.classList.remove('hidden');
+                    completeGeneration();
                     return;
                 }
 
-                // Update status every 10 strings for better UI performance
                 if(stringCount % 10 === 0) {
                      statusText.textContent = `Processing string ${stringCount} of ${numStrings}`;
                 }
@@ -418,9 +474,8 @@
                 let bestNextPin = -1;
                 let maxImprovement = -Infinity;
 
-                // Find the best next string from the current pin
                 for (let nextPin = 0; nextPin < pins.length; nextPin++) {
-                    if (nextPin === currentPin || Math.abs(nextPin - currentPin) < 5) continue; // Avoid trivial lines
+                    if (nextPin === currentPin || Math.abs(nextPin - currentPin) < 5) continue;
                     
                     const lineIndexI = Math.min(currentPin, nextPin);
                     const lineIndexJ = Math.max(currentPin, nextPin);
@@ -437,19 +492,17 @@
                 }
 
                 if (bestNextPin !== -1) {
-                    // Draw the winning line on the canvas
                     stringArtCtx.beginPath();
                     stringArtCtx.moveTo(pins[currentPin].x, pins[currentPin].y);
                     stringArtCtx.lineTo(pins[bestNextPin].x, pins[bestNextPin].y);
-                    stringArtCtx.strokeStyle = `rgba(0, 0, 0, 1.0)`; // Now fully opaque black
+                    stringArtCtx.strokeStyle = `rgba(0, 0, 0, 1.0)`;
                     stringArtCtx.lineWidth = threadWidthPixels;
                     stringArtCtx.stroke();
                     
-                    // Update our in-memory representation of the canvas
                     const lineIndexI = Math.min(currentPin, bestNextPin);
                     const lineIndexJ = Math.max(currentPin, bestNextPin);
                     const linePixels = precomputedLines[lineIndexI][lineIndexJ];
-                    const stringDarkness = 255 * 0.1; // Consistent simulation impact
+                    const stringDarkness = 255 * 0.1;
                      for (const pixelIndex of linePixels) {
                         const i = pixelIndex * 4;
                         currentCanvasData[i] = Math.max(0, currentCanvasData[i] - stringDarkness);
@@ -460,8 +513,8 @@
                     pinPath.push(bestNextPin);
                     currentPin = bestNextPin;
                 } else {
-                   // If no improvement found, jump to a random pin to avoid getting stuck
                    currentPin = Math.floor(Math.random() * pins.length);
+                   pinPath.push(currentPin); // Keep the path continuous even on a jump
                 }
 
                 stringCount++;
@@ -471,10 +524,91 @@
             statusText.textContent = `Processing string 0 of ${numStrings}`;
             statusText.classList.remove('hidden');
             loader.classList.add('hidden');
-
-            // Kick off the animation loop
             requestAnimationFrame(generationStep);
         }
+        
+        /**
+         * Updates the visualizer to show a specific step in the sequence.
+         */
+        function updateVisualizerStep(newStep) {
+            const maxSteps = pinPath.length - 2;
+            if (newStep < 0 || newStep > maxSteps) return; // Boundary check
+
+            currentStep = newStep;
+            
+            const fromPin = pinPath[currentStep];
+            const toPin = pinPath[currentStep + 1];
+
+            // Update text and counters
+            fromPinEl.textContent = fromPin + 1;
+            toPinEl.textContent = toPin + 1;
+            stepCounterEl.textContent = `Step ${currentStep + 1} of ${maxSteps + 1}`;
+
+            // Update button states
+            prevStepBtn.disabled = currentStep === 0;
+            nextStepBtn.disabled = currentStep === maxSteps;
+
+            // Draw the visualizer
+            drawVisualizer();
+        }
+
+        /**
+         * Draws the current state of the pin visualizer.
+         */
+        function drawVisualizer() {
+            const vCanvas = visualizerCanvas;
+            const ctx = visualizerCtx;
+            const size = vCanvas.width;
+            const center = size / 2;
+            const radius = size / 2 - 20;
+
+            ctx.clearRect(0, 0, size, size);
+
+            // Draw all pins as dots
+            const numPins = parseInt(pinsInput.value);
+            for (let i = 0; i < numPins; i++) {
+                const angle = (i / numPins) * 2 * Math.PI - (Math.PI / 2); // Start from 12 o'clock
+                const x = center + radius * Math.cos(angle);
+                const y = center + radius * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, 2 * Math.PI);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+            }
+            
+            // Highlight and connect the current pins
+            const fromPinIndex = pinPath[currentStep];
+            const toPinIndex = pinPath[currentStep + 1];
+
+            const angleFrom = (fromPinIndex / numPins) * 2 * Math.PI - (Math.PI / 2); // Start from 12 o'clock
+            const fromX = center + radius * Math.cos(angleFrom);
+            const fromY = center + radius * Math.sin(angleFrom);
+            
+            const angleTo = (toPinIndex / numPins) * 2 * Math.PI - (Math.PI / 2); // Start from 12 o'clock
+            const toX = center + radius * Math.cos(angleTo);
+            const toY = center + radius * Math.sin(angleTo);
+            
+            // Draw connecting line
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Highlight from pin
+            ctx.beginPath();
+            ctx.arc(fromX, fromY, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = '#34D399'; // Green
+            ctx.fill();
+
+            // Highlight to pin
+            ctx.beginPath();
+            ctx.arc(toX, toY, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FBBF24'; // Yellow
+            ctx.fill();
+        }
+
 
         /**
          * Downloads the generated pin sequence as a text file.
@@ -493,6 +627,63 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
+        
+        /**
+         * Generates an SVG pin template and opens it in a new window for printing.
+         */
+        function printPinTemplate() {
+            const numPins = parseInt(pinsInput.value);
+            if (isNaN(numPins) || numPins <= 0) {
+                alert("Please generate an artwork first to set the number of pins.");
+                return;
+            }
+
+            const size = 792; // Approx US Letter size in points (8.5in * 72pts/in = 612, but 792 for 11in)
+            const radius = size / 2 - 40;
+            const center = size / 2;
+
+            let svgContent = `<svg width="${size}px" height="${size}px" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">`;
+            svgContent += `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="black" stroke-width="1" stroke-dasharray="5,5"/>`;
+            
+            for (let i = 0; i < numPins; i++) {
+                const angle = (i / numPins) * 2 * Math.PI - (Math.PI / 2); // Start from 12 o'clock
+                const x = center + radius * Math.cos(angle);
+                const y = center + radius * Math.sin(angle);
+                
+                const textAngle = angle;
+                const textX = center + (radius + 20) * Math.cos(textAngle);
+                const textY = center + (radius + 20) * Math.sin(textAngle);
+                
+                // Rotate the text to be upright
+                let rotation = (textAngle * 180 / Math.PI) + 90;
+                if (rotation > 90 && rotation <= 270) {
+                    rotation -= 180;
+                }
+
+                svgContent += `<circle cx="${x}" cy="${y}" r="2" fill="black"/>`;
+                svgContent += `<text x="${textX}" y="${textY}" font-family="sans-serif" font-size="10" text-anchor="middle" dominant-baseline="middle" transform="rotate(${rotation} ${textX} ${textY})">${i + 1}</text>`;
+            }
+            
+            svgContent += `</svg>`;
+
+            // Open a new window and write the content
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<!DOCTYPE html><html><head><title>Pin Template</title>');
+            printWindow.document.write('<style>body { margin: 0; text-align: center; } svg { width: 100%; height: auto; }</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(svgContent);
+            printWindow.document.write('</body></html>');
+            
+            printWindow.document.close(); // Important for some browsers
+            printWindow.focus(); // Important for some browsers
+
+            // Use a timeout to ensure content is rendered before printing
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 250);
+        }
     </script>
 </body>
 </html>
+
