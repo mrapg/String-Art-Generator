@@ -152,10 +152,21 @@
                     <canvas id="visualizer-canvas" class="bg-gray-700 rounded-lg"></canvas>
                     <div class="text-center mt-4">
                         <p class="text-base md:text-lg font-semibold text-gray-200">Connect Pin <span id="from-pin" class="text-lg md:text-xl text-yellow-400">1</span> to Pin <span id="to-pin" class="text-lg md:text-xl text-yellow-400">1</span></p>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-600 rounded-full h-2.5 my-4">
+                            <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" style="width: 0%"></div>
+                        </div>
+
+                        <!-- Navigation Controls -->
                         <div class="flex items-center justify-center mt-2 space-x-2 md:space-x-4">
-                            <button id="prev-step-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 md:px-6 rounded-lg">&lt; Prev</button>
-                            <p id="step-counter" class="text-gray-400 text-sm md:text-base">Step 1 of 3000</p>
-                            <button id="next-step-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 md:px-6 rounded-lg">Next &gt;</button>
+                            <button id="prev-step-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 md:px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">&lt; Prev</button>
+                            <div class="flex items-center text-gray-400 text-sm md:text-base">
+                                <span>Step</span>
+                                <input type="number" id="step-input" class="w-20 text-center bg-gray-900 border border-gray-600 rounded-md p-1 mx-2 text-white">
+                                <span id="total-steps-display">of 0</span>
+                            </div>
+                            <button id="next-step-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 md:px-6 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">Next &gt;</button>
                         </div>
                     </div>
                  </div>
@@ -209,7 +220,9 @@
         const toPinEl = document.getElementById('to-pin');
         const prevStepBtn = document.getElementById('prev-step-btn');
         const nextStepBtn = document.getElementById('next-step-btn');
-        const stepCounterEl = document.getElementById('step-counter');
+        const stepInput = document.getElementById('step-input');
+        const totalStepsDisplay = document.getElementById('total-steps-display');
+        const progressBar = document.getElementById('progress-bar');
 
         // --- GLOBAL STATE ---
         let targetImageData = null;
@@ -240,6 +253,8 @@
             printTemplateBtn.addEventListener('click', printPinTemplate);
             prevStepBtn.addEventListener('click', () => updateVisualizerStep(currentStep - 1));
             nextStepBtn.addEventListener('click', () => updateVisualizerStep(currentStep + 1));
+            stepInput.addEventListener('change', handleStepInputChange);
+            document.addEventListener('keydown', handleKeyPress);
         }
 
         function updateCanvasDimensions() {
@@ -277,6 +292,35 @@
         }
 
         // --- CORE FUNCTIONS ---
+
+        function handleStepInputChange() {
+            const maxSteps = pinPath.length - 2;
+            let targetStep = parseInt(stepInput.value, 10) - 1; // Convert to 0-based index
+
+            // Clamp the value to be within the valid range
+            if (isNaN(targetStep) || targetStep < 0) {
+                targetStep = 0;
+            } else if (targetStep > maxSteps) {
+                targetStep = maxSteps;
+            }
+
+            updateVisualizerStep(targetStep);
+        }
+
+        function handleKeyPress(e) {
+            // Return if the build guide is hidden or if the user is typing in an input
+            if (buildInstructionsContainer.classList.contains('hidden') || e.target.tagName === 'INPUT') {
+                return;
+            }
+
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault(); // Prevent browser from scrolling
+                updateVisualizerStep(currentStep - 1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault(); // Prevent browser from scrolling
+                updateVisualizerStep(currentStep + 1);
+            }
+        }
 
         function loadSequenceFromFile() {
             const file = sequenceUpload.files[0];
@@ -606,7 +650,13 @@
 
             fromPinEl.textContent = fromPin + 1;
             toPinEl.textContent = toPin + 1;
-            stepCounterEl.textContent = `Step ${currentStep + 1} of ${maxSteps + 1}`;
+            
+            stepInput.value = currentStep + 1;
+            totalStepsDisplay.textContent = `of ${maxSteps + 1}`;
+
+            const progressPercentage = ((currentStep + 1) / (maxSteps + 1)) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+
             prevStepBtn.disabled = currentStep === 0;
             nextStepBtn.disabled = currentStep === maxSteps;
             drawVisualizer();
@@ -729,4 +779,3 @@
     </script>
 </body>
 </html>
-
