@@ -336,8 +336,34 @@
                     return;
                 }
                 setupBuildGuide(loadedPinPath, true);
+                drawArtFromSequence(loadedPinPath); // Draw the final art preview
             };
             reader.readAsText(file);
+        }
+
+        function drawArtFromSequence(sequence) {
+            // Calculate thread width in pixels, similar to startGeneration
+            const canvasSizeInches = parseFloat(canvasSizeInput.value);
+            const threadWidthMM = parseFloat(threadWidthInput.value);
+            const pixelsPerInch = canvasDimension / canvasSizeInches;
+            const threadWidthInches = threadWidthMM / 25.4;
+            const threadWidthPixels = Math.max(0.1, threadWidthInches * pixelsPerInch);
+
+            stringArtCtx.strokeStyle = `rgba(0, 0, 0, 1.0)`;
+            stringArtCtx.lineWidth = threadWidthPixels;
+
+            // Loop through the pin path and draw each line segment
+            for (let i = 0; i < sequence.length - 1; i++) {
+                const fromPin = pins[sequence[i]];
+                const toPin = pins[sequence[i + 1]];
+
+                if (!fromPin || !toPin) continue; // Safety check
+
+                stringArtCtx.beginPath();
+                stringArtCtx.moveTo(fromPin.x, fromPin.y);
+                stringArtCtx.lineTo(toPin.x, toPin.y);
+                stringArtCtx.stroke();
+            }
         }
 
         function setupBuildGuide(newPinPath, shouldClearArt = false) {
@@ -779,3 +805,4 @@
     </script>
 </body>
 </html>
+
